@@ -22,7 +22,7 @@
 
 ## Visão Geral
 
-Para esse desafio utilizei uma instância do Oracle Linux Server release 9.7 com 12 VCPUs, 12GB de RAM e 100GB de armazenamento.
+Para esse desafio utilizei uma instância do Oracle Linux Server release 9.7 (Hiper-V) com 12 VCPUs, 12GB de RAM e 100GB de armazenamento.
 
 ### Topologia
 
@@ -75,7 +75,7 @@ vagrant plugin install vagrant-libvirt
 
 >  **Importante**: Precisei habilitar a extensão de virtualização na VM Oracle Linux para que as VMs criadas pelo Vagrant possam utilizar a virtualização aninhada:
 > ```powershell
-> # Executar como administrador no host
+> # Executar como administrador no host com a Vm desligada:
 > Set-VMProcessor -VMName "nome-da-vm" -ExposeVirtualizationExtensions $true
 > ```
 
