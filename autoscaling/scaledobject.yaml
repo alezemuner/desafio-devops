@@ -1,0 +1,17 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: service-1-autoscaler
+  namespace: service-1
+spec:
+  scaleTargetRef:
+    name: service-1
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-server.istio-system.svc.cluster.local:80
+      metricName: istio_requests_total
+      threshold: '10'
+      query: sum(rate(istio_requests_total{destination_workload="service-1"}[1m]))

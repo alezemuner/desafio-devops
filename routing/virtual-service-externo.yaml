@@ -1,0 +1,27 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: public-routing
+  namespace: istio-system
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - public-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /svc1
+    route:
+    - destination:
+        host: service-1.service-1.svc.cluster.local
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /svc3
+    route:
+    - destination:
+        host: service-3.service-3.svc.cluster.local
+        port:
+          number: 80

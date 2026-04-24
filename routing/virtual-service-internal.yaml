@@ -1,0 +1,23 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: route-to-svc2
+  namespace: service-1
+spec:
+  hosts:
+  - service-2.service-2.svc.cluster.local
+  http:
+  - route:
+    - destination:
+        host: service-2.service-2.svc.cluster.local
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: dr-to-svc2
+  namespace: service-1
+spec:
+  host: service-2.service-2.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

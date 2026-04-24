@@ -1,0 +1,45 @@
+# Servico1: Obriga validação do Token
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: require-jwt-svc1
+  namespace: service-1
+spec:
+  selector:
+    matchLabels:
+      app: service-1
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        requestPrincipals: ["testing@secure.istio.io/*"]
+---
+# Servico2: Permite tráfego APENAS da Service Account do Servico1
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-only-from-svc1
+  namespace: service-2
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/service-1/sa/service-1-account"] 
+---
+# Servico3: Bloqueia tráfego interno (Servico1 e Servico2) e obriga Token
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-internal-access
+  namespace: service-3
+spec:
+  selector:
+    matchLabels:
+      app: service-3
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["istio-system"] # Apenas via Ingress Gateway
+        requestPrincipals: ["testing@secure.istio.io/*"]
