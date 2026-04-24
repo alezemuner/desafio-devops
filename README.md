@@ -348,20 +348,20 @@ HTTP/1.1 403 Forbidden
 ### Cenário 2: Acesso negado (Token Inválido)
 
 ```bash
-curl -I -H "Authorization: Bearer token_falso" http://192.168.121.10:30554/svc1
+curl -I -H "Authorization: Bearer token_falso" http://192.168.121.10:porta-istio-ingressgateway/svc1
 ```
 
 **Resultado:**
 ```
 HTTP/1.1 401 Unauthorized
-www-authenticate: Bearer realm="http://192.168.121.10:30554/svc1", error="invalid_token"
+www-authenticate: Bearer realm="http://192.168.121.10:porta-istio-ingressgateway/svc1", error="invalid_token"
 ```
 
 ### Cenário 3: Acesso Liberado ao Service 1 e 3 (Com Token)
 
 ```bash
-curl -H "Authorization: Bearer $TOKEN" http://192.168.121.10:30554/svc1
-curl -H "Authorization: Bearer $TOKEN" http://192.168.121.10:30554/svc3
+curl -H "Authorization: Bearer $TOKEN" http://192.168.121.10:porta-istio-ingressgateway/svc1
+curl -H "Authorization: Bearer $TOKEN" http://192.168.121.10:porta-istio-ingressgateway/svc3
 ```
 
 ### Cenário 4: Testando o bloqueio do Service 2 (A partir do Service 3)
@@ -397,7 +397,7 @@ wget: server returned error: HTTP/1.1 403 Forbidden
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
-helm install prometheus prometheus-community/prometheus -n istio-system -f prom-scrape.yaml
+helm install prometheus prometheus-community/prometheus -n istio-system -f autoscaling/prom-scrape.yaml
 ```
 
 ---
@@ -489,9 +489,11 @@ service-1-9dc6747b5-7mphr   2/2     Running   0          141m
 ```
 
 Em outro terminal executar o K6 passando a variável do Token e o arquivo de teste de carga:
-
+Obs: Antes de executar o comando, mudar a porta da url no arquivo loadtest.js. 
+Execute kubectl get svc istio-ingressgateway -n istio-system para ficar a porta atribuida.
 ```bash
-k6 run -e TOKEN=$TOKEN loadtest.js
+vagrant ssh control-plane
+k6 run -e TOKEN=$TOKEN autoscaling/loadtest.js
 ```
 
 **Saída esperada alguns segundos após a inicialização do teste:**
