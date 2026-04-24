@@ -41,6 +41,8 @@ A topologia baseia-se em três microsserviços rodando em namespaces isolados, p
 | **Vagrant + Libvirt** | Provisionamento de VMs |
 | **Helm** | Gerenciador de pacotes para Service 2 |
 
+Utilizei Vagrant para facilitar a automação e reprodutibilidade e o Libivirt para aproveitar a virtualização nativa do kernel Linux.
+
 ### Arquitetura de Segurança
 
 - **mTLS**: Ativo globalmente em modo STRICT nos 3 namespaces
@@ -85,7 +87,7 @@ vagrant plugin install vagrant-libvirt
 
 O script de provisionamento instala o k3s no nó servidor e junta os nós agentes ao cluster.
 
-> **Obs**: Como é um ambiente de laboratório, defini o token do k3s no Vagrantfile para facilitar a automação e reprodutibilidade.
+> **Obs**: Como é um ambiente de laboratório, defini o token do k3s no Vagrantfile para facilitar a reprodutibilidade.
 
 ```bash
 # Iniciar a criação do cluster com o comando:
