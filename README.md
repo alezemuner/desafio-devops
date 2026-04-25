@@ -105,8 +105,6 @@ worker-2                  running (libvirt)
 Acessar o Control Plane para verificar o status do cluster:
 ```bash
 vagrant ssh control-plane
-```
-```bash
 kubectl get nodes
 ```
 
@@ -164,6 +162,7 @@ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-4 | bas
 ## 3- Criar os Namespaces e ativar a Injeção Automática
 
 ```bash
+cd desafio-devops/
 kubectl apply -f namespaces/namespaces.yaml
 ````
 Verifica os namespaces criados:
