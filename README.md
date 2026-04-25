@@ -57,27 +57,29 @@ Utilizei Vagrant para facilitar a automação e reprodutibilidade e o Libivirt p
 
 Instalação do Vagrant e libvirt no Host para criação as VMs necessárias para o cluster k3s.
 
+Instalação do libvirt:
 ```bash
-# Instalação do libvirt:
 sudo dnf install -y qemu-kvm libvirt virt-install virt-viewer
 sudo systemctl enable --now libvirtd
 sudo usermod -aG libvirt $(whoami)
 newgrp libvirt
-
-# Instalação do Vagrant:
+```
+Instalação do Vagrant:
+```bash
 sudo dnf install -y dnf-plugins-core
 sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
 sudo dnf install -y vagrant
-
-# Plugin do Vagrant para libvirt:
+```
+Plugin do Vagrant para libvirt:
+```bash
 sudo dnf config-manager --enable ol9_codeready_builder
 sudo dnf install -y gcc libvirt-devel ruby-devel qemu-kvm
 vagrant plugin install vagrant-libvirt
 ```
 
 >  **Importante**: Precisei habilitar a extensão de virtualização na VM Oracle Linux para que as VMs criadas pelo Vagrant possam utilizar a virtualização aninhada:
+> Executar como administrador no host com a Vm desligada:
 > ```powershell
-> # Executar como administrador no host com a Vm desligada:
 > Set-VMProcessor -VMName "nome-da-vm" -ExposeVirtualizationExtensions $true
 > ```
 
@@ -89,19 +91,22 @@ O script de provisionamento instala o k3s no nó servidor e junta os nós agente
 
 > **Obs**: Como é um ambiente de laboratório, defini o token do k3s no Vagrantfile para facilitar a reprodutibilidade.
 
+Iniciar a criação do cluster com o comando:
 ```bash
-# Iniciar a criação do cluster com o comando:
-vagrant up  
+vagrant up
+```
 
-vagrant status 
-# retorno
+**Saída esperada:**
+```bash
 control-plane             running (libvirt)
 worker-1                  running (libvirt)
 worker-2                  running (libvirt)
-
-# Acessar o Control Plane para verificar o status do cluster:
+```
+Acessar o Control Plane para verificar o status do cluster:
+```bash
 vagrant ssh control-plane
-
+```
+```bash
 kubectl get nodes
 ```
 
@@ -121,20 +126,23 @@ worker-2        Ready    <none>          3m51s   v1.34.6+k3s1
 No Control Plane, exporte o Kubeconfig para permitir o uso do kubectl e istioctl:
 
 ```bash
-# Declara uma variável de ambiente para o kubeconfig do k3s
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> ~/.bashrc
-
-# Baixa a versão mais recente do Istio
+```
+Baixa a versão mais recente do Istio:
+```bash
 curl -L https://istio.io/downloadIstio | sh -
-
-# Move o binário para uma pasta do sistema
+```
+Move o binário para uma pasta do sistema:
+```bash
 sudo mv istio-*/bin/istioctl /usr/local/bin/
-
-# Instala o Istio no cluster
+```
+Instala o Istio no cluster:
+```bash
 istioctl install --set profile=default -y
-
-# Verificar se os pods do Istio estão rodando
+```
+Verificar se os pods do Istio estão rodando:
+```bash
 kubectl get pods -n istio-system
 ```
 
@@ -156,10 +164,10 @@ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-4 | bas
 ## 3- Criar os Namespaces e ativar a Injeção Automática
 
 ```bash
-# Cria os namespaces
 kubectl apply -f namespaces/namespaces.yaml
-
-# Verifica os namespaces criados
+````
+Verifica os namespaces criados:
+```bash
 kubectl get namespaces
 ```
 
@@ -177,7 +185,9 @@ service-3         Active   9s
 
 ```bash
 kubectl apply -f politicas/peer-authentication.yaml
+````
 
+```bash
 kubectl get peerauthentication -A
 ```
 
@@ -197,7 +207,9 @@ service-3   strict-service-3   STRICT   83s
 
 ```bash
 kubectl apply -f deploy/deploy-yaml.yaml
+```
 
+```bash
 kubectl get deploy -A
 ```
 
@@ -214,21 +226,25 @@ service-3      service-3                     ClusterIP      10.43.219.201   <non
 ```
 
 ### Aplicação 2 via Helm
-
+Criar o chart do Helm:
 ```bash
-# Criar o chart do Helm
 helm create service-2
-
-# Apagar os arquivos:
+````
+Apagar os arquivos:
+```bash
 rm -f ./service-2/templates/httproute.yaml
 rm -f ./service-2/templates/NOTES.txt
+````
 
-# Substituir o values.yaml pelo deploy-helm.yaml
+Substituir o values.yaml pelo deploy-helm.yaml
+```bash
 cp ./deploy/deploy-helm.yaml ./service-2/values.yaml
-
-# Instalar no cluster
+````
+Instalar no cluster:
+```bash
 helm install service-2 ./service-2 -n service-2
-
+```
+```bash
 kubectl get svc -n service-2
 ```
 
@@ -248,6 +264,8 @@ service-2   ClusterIP   10.43.140.17   <none>        80/TCP    30s
 
 ```bash
 kubectl apply -f routing/gateway-externo.yaml
+```
+```bash
 kubectl get gw -n istio-system
 ```
 
@@ -262,7 +280,8 @@ public-gateway   3h15m
 ```bash
 kubectl apply -f routing/virtual-service-externo.yaml
 kubectl apply -f routing/virtual-service-internal.yaml
-
+```
+```bash
 kubectl get virtualservice -A
 ```
 
@@ -271,8 +290,12 @@ kubectl get virtualservice -A
 NAMESPACE      NAME             GATEWAYS             HOSTS                                       AGE
 istio-system   public-routing   ["public-gateway"]   ["*"]                                       4m27s
 service-1      route-to-svc2                         ["service-2.service-2.svc.cluster.local"]   15s
+````
 
 kubectl get destinationrule -A
+
+**Saída esperada:**
+```
 NAMESPACE   NAME         HOST                                    AGE
 service-1   dr-to-svc2   service-2.service-2.svc.cluster.local   29s
 ```
@@ -287,6 +310,9 @@ Garantir que o Service 2 e 3 sejam protegidos e que o tráfego externo exija Tok
 
 ```bash
 kubectl apply -f seguranca/request-auth.yaml
+````
+
+```bash
 kubectl get requestauthentication -A
 ```
 
@@ -300,7 +326,10 @@ service-3   jwt-auth-svc3   16s
 ### Políticas de autorização
 
 ```bash
-kubectl apply -f seguranca/authorization-policy.yml 
+kubectl apply -f seguranca/authorization-policy.yml
+```
+
+```bash
 kubectl get authorizationpolicy -A
 ```
 
@@ -328,6 +357,10 @@ NAME                   TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)       
 istio-ingressgateway   LoadBalancer   10.43.3.128   <pending>     15021:31499/TCP,80:30554/TCP,443:31832/TCP   67m
 ```
 
+Edite o arquivo `loadtest.js` com a porta gerada do servico istio-ingressgateway do comando anterior.
+
+> No exemplo a porta gerada foi a 30554
+
 ### Definir token válido
 
 ```bash
@@ -337,7 +370,7 @@ TOKEN=$(curl -s https://raw.githubusercontent.com/istio/istio/release-1.21/secur
 ### Cenário 1: Acesso negado (Sem Token)
 
 ```bash
-curl -I http://192.168.121.10:30554/svc1
+curl -I http://192.168.121.10:porta-istio-ingressgateway/svc1
 ```
 
 **Resultado:**
@@ -363,6 +396,8 @@ www-authenticate: Bearer realm="http://192.168.121.10:porta-istio-ingressgateway
 curl -H "Authorization: Bearer $TOKEN" http://192.168.121.10:porta-istio-ingressgateway/svc1
 curl -H "Authorization: Bearer $TOKEN" http://192.168.121.10:porta-istio-ingressgateway/svc3
 ```
+
+> Para os cenários 1,2,3 inserir no comando curl a porta do servico istio-ingressgateway
 
 ### Cenário 4: Testando o bloqueio do Service 2 (A partir do Service 3)
 
@@ -401,10 +436,12 @@ helm install prometheus prometheus-community/prometheus -n istio-system -f autos
 ```
 
 ---
+```bash
+kubectl get pods -n istio-system
+```
 
 **Saída esperada:**
 ```
-kubectl get pods -n istio-system
 NAME                                                 READY   STATUS    RESTARTS   AGE
 istio-ingressgateway-85c8f4b645-l4vjt                1/1     Running   0          24h
 istiod-6d584f88d4-z9tln                              1/1     Running   0          24h
@@ -428,9 +465,12 @@ helm install keda kedacore/keda --namespace keda --create-namespace
 
 ---
 
+```bash
+kubectl get pods -n keda
+```
+
 **Saída esperada:**
 ```
-kubectl get pods -n keda
 NAME                                                 READY   STATUS    RESTARTS   AGE
 keda-admission-webhooks-7d5d987497-xwh6k           1/1     Running   1 (33s ago)   48s
 keda-operator-658786f579-z46l5                     1/1     Running   1 (40s ago)   48s
@@ -449,9 +489,12 @@ sudo dnf install -y k6
 
 ---
 
+```bash
+k6 version
+```
+
 **Saída esperada:**
 ```
-k6 version
 k6 v1.7.1 (commit/9f82e6f1fc, go1.26.1, linux/amd64)
 ```
 
@@ -465,9 +508,12 @@ Monitorar a métrica istio_requests_total no Prometheus. Se o service-1 passar d
 kubectl apply -f autoscaling/scaledobject.yaml
 ```
 
+```bash
+kubectl get scaledobject -n service-1
+````
+
 **Saída esperada:**
 ```
-kubectl get scaledobject -n service-1
 NAME                   SCALETARGETKIND      SCALETARGETNAME   MIN   MAX   READY   ACTIVE   FALLBACK   PAUSED   TRIGGERS     AUTHENTICATIONS   AGE
 service-1-autoscaler   apps/v1.Deployment   service-1         1     5     True    False    False      False    prometheus                     111s
 ```
@@ -475,28 +521,40 @@ service-1-autoscaler   apps/v1.Deployment   service-1         1     5     True  
 
 ### Validação do Autoscaling
 
-No terminal execute o comando para observar a criação dos Pods do Service 1:
+Abra um segundo terminal e execute o comando para monitorar a criação dos Pods do Service 1:
 
 ```bash
+cd desafio-devops/
+vagrant ssh control-plane
 kubectl get pods -n service-1 -w
 ```
 
 **Saída esperada:**
 ```
-kubectl get pods -n service-1 -w
 NAME                        READY   STATUS    RESTARTS   AGE
 service-1-9dc6747b5-7mphr   2/2     Running   0          141m
 ```
 
-Em outro terminal executar o K6 passando a variável do Token e o arquivo de teste de carga:
-Obs: Antes de executar o comando, mudar a porta da url no arquivo loadtest.js. 
-Execute kubectl get svc istio-ingressgateway -n istio-system para ficar a porta atribuida.
+Abra um terceiro terminal e execute o comando para monitorar o HPA:
+
 ```bash
+cd desafio-devops/
 vagrant ssh control-plane
+kubectl get hpa -n service-1 -w
+```
+
+**Saída esperada:**
+```
+NAME                            REFERENCE              TARGETS           MINPODS   MAXPODS   REPLICAS   AGE
+keda-hpa-service-1-autoscaler   Deployment/service-1   0/10 (avg)        1         5         1          38m
+```
+
+Volte para o primeiro terminal e execute o teste.
+```bash
 k6 run -e TOKEN=$TOKEN autoscaling/loadtest.js
 ```
 
-**Saída esperada alguns segundos após a inicialização do teste:**
+**Saída esperada no segundo terminal após alguns segundos da inicialização do teste:**
 ```
 kubectl get pods -n service-1 -w
 NAME                        READY   STATUS    RESTARTS   AGE
@@ -507,7 +565,7 @@ service-1-9dc6747b5-hxdww   2/2     Running   0          38s
 service-1-9dc6747b5-xhm8g   2/2     Running   0          38s
 ```
 
-**Saída esperada do HPA:**
+**Saída esperada no terceiro terminal após alguns segundos da inicialização do teste:**
 ```
 kubectl get hpa -n service-1 -w
 NAME                            REFERENCE              TARGETS           MINPODS   MAXPODS   REPLICAS   AGE
